@@ -1,9 +1,13 @@
 # pylint: disable=missing-docstring,line-too-long
+
 import sys
 from os import path
 import csv
 import requests
 from bs4 import BeautifulSoup
+
+SEARCH_URL = "https://recipes.lewagon.com/"
+PAGES_TO_SCRAPE = 3
 
 
 def parse(html):
@@ -21,28 +25,31 @@ def parse_recipe(article):
 
 def write_csv(ingredient, recipes):
     ''' dump recipes to a CSV file `recipes/INGREDIENT.csv` '''
-    with open(f'recipes/{ingredient}.csv', 'w') as recipe_file:
+    ingre = f'recipes/{ingredient}.csv'
+    with open(ingre, 'w', encoding="utf-8") as recipe_file:
         keys = recipes[0].keys()
         writer = csv.DictWriter(recipe_file, fieldnames=keys)
         writer.writeheader()
         writer.writerows(recipes)
 
+
 def scrape_from_internet(ingredient, start=1):
     ''' Use `requests` to get the HTML page of search results for given ingredients. '''
+
     print(f"Scraping page {start}")
-    SEARCH_URL = "https://recipes.lewagon.com/?search[query]={ingredient}"
     response = requests.get(
         SEARCH_URL,
-        params={'search[query]': ingredient, 'page': start})
-
-    if response.history :
+        params={'search[query]': ingredient, 'page': start},
+        timeout=10
+        )
+    if response.history:
         return None
     return response.text
 
 def scrape_from_file(ingredient):
     file = f"pages/{ingredient}.html"
     if path.exists(file):
-        return open(file)
+        return open(file, encoding="utf-8")
     print("Please, run the following command first:")
     print(f'curl "https://recipes.lewagon.com/?search[query]={ingredient}" > pages/{ingredient}.html')
     sys.exit(1)
